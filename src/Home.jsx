@@ -8,7 +8,6 @@ export default function Home() {
   const [showAnimation, setShowAnimation] = useState(false);
 
   useEffect(() => {
-    // Prevent scrolling on mount
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = '';
@@ -20,9 +19,50 @@ export default function Home() {
       setTimeout(() => setShowAnimation(true), 500);
     }
   }, [completedGames]);
+const audioRef = useRef(null);
+
+    useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.volume = 0.1; 
+      const playAudio = () => {
+        audio.play().catch((error) => {
+          console.error('Audio playback failed:', error);
+          const handleInteraction = () => {
+            audio.volume = 0.1; 
+            audio.play().catch((err) => console.error('Playback failed after interaction:', err));
+            window.removeEventListener('click', handleInteraction);
+          };
+          window.addEventListener('click', handleInteraction);
+        });
+      };
+      playAudio();
+    }
+  }, []);
 
   return (
-<div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-purple-900 to-black p-6 font-sans text-white overflow-hidden">
+    <div className="fixed inset-0 p-6 font-sans text-white overflow-hidden"
+      style={{
+        background: 'linear-gradient(45deg, #1a0033, #4b0082, #8b008b, #ff1493, #4b0082)',
+        backgroundSize: '400% 400%',
+        animation: 'gradientShift 15s ease infinite',
+      }}
+    >
+      <style>
+        {`
+          @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+        `}
+      </style>
+       <audio ref={audioRef} autoPlay loop>
+        <source
+          src="https://res.cloudinary.com/dtwa3lxdk/video/upload/v1752353892/Happy_Birthday_Song_spcsoo.mp3"
+          type="audio/mp3"
+        />
+      </audio>
       <FireworkBackground />
       {!showAnimation ? (
         <GameContainer completedGames={completedGames} setCompletedGames={setCompletedGames} />
@@ -33,7 +73,7 @@ export default function Home() {
           transition={{ duration: 1, ease: 'easeOut' }}
           className="flex flex-col items-center justify-center h-full w-full"
         >
-          <h1 className="text-5xl md:text-7xl text-pink-300 mb-8 font-extrabold animate-bounce ">
+          <h1 className="text-2xl md:text-7xl text-pink-300 mb-8 mt-20 font-extrabold animate-bounce">
             🎉 Happy Birthday Mother! 🎉
           </h1>
           <div className="w-full h-2/3">
@@ -55,13 +95,13 @@ function FireworkBackground() {
         left: x,
         top: y,
         backgroundColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
-        width: `${Math.random() * 2 + 1}px`,
-        height: `${Math.random() * 2 + 1}px`,
+        width: `${Math.random() * 2 + 3}px`,
+        height: `${Math.random() * 2 + 3}px`,
         borderRadius: '50%',
         boxShadow: '0 0 5px rgba(255, 255, 255, 0.5)',
       });
       const angle = Math.random() * 360;
-      const distance = Math.random() * 100 + 50;
+      const distance = Math.random() * 100 + 100;
       const vx = Math.cos(angle * Math.PI / 180) * distance;
       const vy = Math.sin(angle * Math.PI / 180) * distance;
       gsap.to(particle, {
@@ -69,7 +109,7 @@ function FireworkBackground() {
         y: vy,
         opacity: 0,
         duration: 1.5,
-        delay: Math.random() * 0.3,
+        delay: Math.random() * 0.1,
         ease: 'power2.out',
         onComplete: () => particle.remove(),
       });
@@ -219,6 +259,28 @@ function CatchingFlowersGame({ onComplete }) {
   }, []);
 
   useEffect(() => {
+    const handleTouchMove = (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const newX = touch.clientX - 64; // Adjust for half the basket width (w-32 = 128px)
+      setBasketX(Math.max(0, Math.min(newX, window.innerWidth - 64)));
+    };
+
+    const handleTouchStart = (e) => {
+      const touch = e.touches[0];
+      const newX = touch.clientX - 64;
+      setBasketX(Math.max(0, Math.min(newX, window.innerWidth - 64)));
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
+  useEffect(() => {
     const animate = () => {
       setFlowers((prev) =>
         prev
@@ -344,7 +406,7 @@ function MemoryMatchGame({ onComplete }) {
 
   return (
     <div className="flex flex-col items-center justify-center w-full h-full text-white">
-      <h2 className="text-3xl font-bold mb-6">🧠 Match the Birthday Emojis!</h2>
+      <h2 className="text-xl md:text-3xl font-bold mb-6">🧠 Match the Birthday Emojis!</h2>
       <div className="grid grid-cols-4 gap-4">
         {cards.map((card, i) => (
           <motion.div
@@ -379,7 +441,7 @@ function MemoryMatchGame({ onComplete }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'pink',
+                backgroundColor: 'white',
                 transform: 'rotateY(180deg)',
                 borderRadius: '0.5rem',
               }}
